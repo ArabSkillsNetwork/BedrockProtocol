@@ -228,6 +228,7 @@ class PacketPool{
 		$this->registerPacket(new SetPlayerInventoryOptionsPacket());
 		$this->registerPacket(new SetHudPacket());
 		$this->registerPacket(new AwardAchievementPacket());
+		$this->registerPacket(new ClientboundCloseFormPacket());
 	}
 
 	public function registerPacket(Packet $packet) : void{
