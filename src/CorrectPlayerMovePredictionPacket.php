@@ -14,9 +14,14 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol;
 
+use pmmp\encoding\Byte;
+use pmmp\encoding\ByteBufferReader;
+use pmmp\encoding\ByteBufferWriter;
+use pmmp\encoding\LE;
+use pmmp\encoding\VarInt;
 use pocketmine\math\Vector2;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\serializer\PacketSerializer;
+use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 
 class CorrectPlayerMovePredictionPacket extends DataPacket implements ClientboundPacket{
 	public const NETWORK_ID = ProtocolInfo::CORRECT_PLAYER_MOVE_PREDICTION_PACKET;
@@ -30,7 +35,7 @@ class CorrectPlayerMovePredictionPacket extends DataPacket implements Clientboun
 	private int $tick;
 	private int $predictionType;
 	private Vector2 $vehicleRotation;
-	private float $vehicleAngularVelocity;
+	private ?float $vehicleAngularVelocity;
 
 	/**
 	 * @generate-create-func
@@ -42,7 +47,7 @@ class CorrectPlayerMovePredictionPacket extends DataPacket implements Clientboun
 		int $tick,
 		int $predictionType,
 		Vector2 $vehicleRotation,
-		float $vehicleAngularVelocity,
+		?float $vehicleAngularVelocity,
 	) : self{
 		$result = new self;
 		$result->position = $position;
@@ -67,27 +72,27 @@ class CorrectPlayerMovePredictionPacket extends DataPacket implements Clientboun
 
 	public function getVehicleRotation() : Vector2{ return $this->vehicleRotation; }
 
-	public function getVehicleAngularVelocity() : float{ return $this->vehicleAngularVelocity; }
+	public function getVehicleAngularVelocity() : ?float{ return $this->vehicleAngularVelocity; }
 
-	protected function decodePayload(PacketSerializer $in) : void{
-		$this->predictionType = $in->getByte();
-		$this->position = $in->getVector3();
-		$this->delta = $in->getVector3();
-		$this->vehicleRotation = new Vector2($in->getFloat(), $in->getFloat());
-		$this->vehicleAngularVelocity = $in->getFloat();
-		$this->onGround = $in->getBool();
-		$this->tick = $in->getUnsignedVarLong();
+	protected function decodePayload(ByteBufferReader $in) : void{
+		$this->predictionType = Byte::readUnsigned($in);
+		$this->position = CommonTypes::getVector3($in);
+		$this->delta = CommonTypes::getVector3($in);
+		$this->vehicleRotation = new Vector2(LE::readFloat($in), LE::readFloat($in));
+		$this->vehicleAngularVelocity = CommonTypes::readOptional($in, LE::readFloat(...));
+		$this->onGround = CommonTypes::getBool($in);
+		$this->tick = VarInt::readUnsignedLong($in);
 	}
 
-	protected function encodePayload(PacketSerializer $out) : void{
-		$out->putByte($this->predictionType);
-		$out->putVector3($this->position);
-		$out->putVector3($this->delta);
-		$out->putFloat($this->vehicleRotation->getX());
-		$out->putFloat($this->vehicleRotation->getY());
-		$out->putFloat($this->vehicleAngularVelocity);
-		$out->putBool($this->onGround);
-		$out->putUnsignedVarLong($this->tick);
+	protected function encodePayload(ByteBufferWriter $out) : void{
+		Byte::writeUnsigned($out, $this->predictionType);
+		CommonTypes::putVector3($out, $this->position);
+		CommonTypes::putVector3($out, $this->delta);
+		LE::writeFloat($out, $this->vehicleRotation->getX());
+		LE::writeFloat($out, $this->vehicleRotation->getY());
+		CommonTypes::writeOptional($out, $this->vehicleAngularVelocity, LE::writeFloat(...));
+		CommonTypes::putBool($out, $this->onGround);
+		VarInt::writeUnsignedLong($out, $this->tick);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
