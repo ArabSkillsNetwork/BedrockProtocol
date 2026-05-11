@@ -16,6 +16,8 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pmmp\encoding\DataDecodeException;
 use pmmp\encoding\VarInt;
+use function array_filter;
+use function is_object;
 
 class PacketPool{
 	protected static ?PacketPool $instance = null;
@@ -239,7 +241,7 @@ class PacketPool{
 		$this->registerPacket(new PlayerUpdateEntityOverridesPacket());
 		$this->registerPacket(new PlayerLocationPacket());
 		$this->registerPacket(new ClientboundControlSchemeSetPacket());
-		$this->registerPacket(new DebugDrawerPacket());
+		$this->registerPacket(new PrimitiveShapesPacket());
 		$this->registerPacket(new ServerboundPackSettingChangePacket());
 		$this->registerPacket(new ClientboundDataStorePacket());
 		$this->registerPacket(new GraphicsOverrideParameterPacket());
@@ -257,6 +259,8 @@ class PacketPool{
 		$this->registerPacket(new ServerboundDataDrivenScreenClosedPacket());
 		$this->registerPacket(new SyncWorldClocksPacket());
 		$this->registerPacket(new ClientboundAttributeLayerSyncPacket());
+		$this->registerPacket(new ServerStoreInfoPacket());
+		$this->registerPacket(new ServerPresenceInfoPacket());
 	}
 
 	public function registerPacket(Packet $packet) : void{
@@ -272,5 +276,13 @@ class PacketPool{
 	 */
 	public function getPacket(string $buffer) : ?Packet{
 		return $this->getPacketById(VarInt::unpackUnsignedInt($buffer) & DataPacket::PID_MASK);
+	}
+
+	/**
+	 * @return Packet[]
+	 * @phpstan-return array<int, Packet>
+	 */
+	public function getAll() : array{
+		return array_filter($this->pool->toArray(), is_object(...));
 	}
 }

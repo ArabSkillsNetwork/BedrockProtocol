@@ -17,33 +17,33 @@ namespace pocketmine\network\mcpe\protocol\types\login\openid;
 use pocketmine\network\mcpe\protocol\types\login\JwtBodyRfc7519;
 
 /**
- * JsonMapper model for the Xbox Live auth JWT claims as of Bedrock 1.21.100
+ * Mostly the same as the xbox token but with some weird differences
  */
-final class XboxAuthJwtBody extends JwtBodyRfc7519{
-	/** @required */
-	public string $ipt; // Platform type
-
-	/** @required */
-	public string $pfcd; // PlayFab Creation Date / First PlayFab Title Account Login
-
-	/** @required */
-	public string $tid; // PlayFab Title ID
-
-	/** @required */
-	public string $mid; // the player's Minecraft ID, identifying the player in Minecraft's PlayFab namespace
-
-	/** @required */
-	public string $xid; // the player's Xbox Live User Id
-
-	/** @required */
-	public string $xname; // the player's Xbox Live gamertag
-
-	public int $ap; // ??
+final class SelfSignedJwtBody extends JwtBodyRfc7519{
 
 	/** @required */
 	public string $cpk; // the public key that was used to sign the "client properties" token
 
-	public string $pid = ""; // PlayStation Network user ID
+	/** @required */
+	public string $leguuid; // the client's chosen UUID
 
-	public string $pname = ""; // PlayStation Network username
+	/** @required */
+	public string $xname; // the player's chosen name, nothing to do with Xbox but shares the same property name
+
+	/** @required */
+	public string $mid; // the player's Minecraft ID, identifying the player in Minecraft's PlayFab namespace
+
+	public int $ap; // ??
+
+	//The following are not required for self-signed authentication, but seem to be present as empty strings in a
+	//self-signed token for some reason
+
+	public string $nid;
+	public string $nname;
+
+	public string $pid;
+	public string $pname;
+
+	public string $xid;
+
 }

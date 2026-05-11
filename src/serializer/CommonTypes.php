@@ -333,6 +333,41 @@ final class CommonTypes{
 		}
 	}
 
+	public static function getNetworkItemStackDescriptor(ByteBufferReader $in) : ItemStackWrapper{
+		$id = LE::readSignedShort($in);
+		$count = LE::readUnsignedShort($in);
+		$meta = VarInt::readUnsignedInt($in);
+
+		$hasNetId = self::getBool($in);
+		if ($hasNetId) {
+			$variant = VarInt::readUnsignedInt($in);
+			$stackId = VarInt::readSignedInt($in);
+		} else {
+			$variant = 0;
+			$stackId = 0;
+		}
+
+		$blockRuntimeId = VarInt::readUnsignedInt($in);
+		$rawExtraData = self::getString($in);
+
+		return new ItemStackWrapper($stackId, new ItemStack($id, $meta, $count, $blockRuntimeId, $rawExtraData), $variant);
+	}
+
+	public static function putNetworkItemStackDescriptor(ByteBufferWriter $out, ItemStackWrapper $itemStackWrapper) : void{
+		LE::writeSignedShort($out, $itemStackWrapper->getItemStack()->getId());
+		LE::writeUnsignedShort($out, $itemStackWrapper->getItemStack()->getCount());
+		VarInt::writeUnsignedInt($out, $itemStackWrapper->getItemStack()->getMeta());
+
+		self::putBool($out, $hasNetId = $itemStackWrapper->getStackId() !== 0);
+		if($hasNetId){
+			VarInt::writeUnsignedInt($out, $itemStackWrapper->getStackIdVariant());
+			VarInt::writeSignedInt($out, $itemStackWrapper->getStackId());
+		}
+
+		VarInt::writeUnsignedInt($out, $itemStackWrapper->getItemStack()->getBlockRuntimeId());
+		self::putString($out, $itemStackWrapper->getItemStack()->getRawExtraData());
+	}
+
 	/** @throws DataDecodeException */
 	public static function getRecipeIngredient(ByteBufferReader $in) : RecipeIngredient{
 		$descriptorType = Byte::readUnsigned($in);

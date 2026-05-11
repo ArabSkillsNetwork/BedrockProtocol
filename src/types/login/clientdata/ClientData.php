@@ -65,6 +65,9 @@ final class ClientData{
 	public int $DeviceOS;
 
 	/** @required */
+	public bool $FilterProfanity;
+
+	/** @required */
 	public string $GameVersion;
 
 	/** @required */
@@ -86,6 +89,9 @@ final class ClientData{
 	public int $MemoryTier;
 
 	public bool $OverrideSkin;
+
+	public string $PartyId;
+	public bool $IsPartyLeader;
 
 	/**
 	 * @var ClientDataPersonaSkinPiece[]
