@@ -125,6 +125,8 @@ final class ClientData{
 	/** @required */
 	public bool $PremiumSkin = false;
 
+	public string $ProfileHash = "";
+
 	/** @required */
 	public string $SelfSignedId;
 
@@ -166,10 +168,8 @@ final class ClientData{
 
 	/** @required */
 	public int $UIProfile;
-	
-	/** @required */
-	public string $Waterdog_IP;
-	
-	/** @required */
-	public string $Waterdog_XUID;
+
+	public ?string $Waterdog_IP = null;
+
+	public ?string $Waterdog_XUID = null;
 }
