@@ -17,8 +17,8 @@ namespace pocketmine\network\mcpe\protocol\types\inventory\stackrequest;
 use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
+use pmmp\encoding\LE;
 use pmmp\encoding\VarInt;
-use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 use pocketmine\network\mcpe\protocol\types\GetTypeIdFromConstTrait;
 
 /**
@@ -43,16 +43,16 @@ final class GrindstoneStackRequestAction extends ItemStackRequestAction{
 	public function getRepetitions() : int{ return $this->repetitions; }
 
 	public static function read(ByteBufferReader $in) : self{
-		$recipeId = CommonTypes::readRecipeNetId($in);
-		$repairCost = VarInt::readSignedInt($in); //WHY!!!!
+		$recipeId = LE::readSignedInt($in);
 		$repetitions = Byte::readUnsigned($in);
+		$repairCost = VarInt::readSignedInt($in); //WHY!!!!
 
 		return new self($recipeId, $repairCost, $repetitions);
 	}
 
 	public function write(ByteBufferWriter $out) : void{
-		CommonTypes::writeRecipeNetId($out, $this->recipeId);
-		VarInt::writeSignedInt($out, $this->repairCost);
+		LE::writeSignedInt($out, $this->recipeId);
 		Byte::writeUnsigned($out, $this->repetitions);
+		VarInt::writeSignedInt($out, $this->repairCost);
 	}
 }
