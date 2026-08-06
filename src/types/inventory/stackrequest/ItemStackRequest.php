@@ -50,6 +50,15 @@ final class ItemStackRequest{
 
 	public function getFilterStringCause() : int{ return $this->filterStringCause; }
 
+	//place-in-container and take-out-of-container are never sent, so higher type IDs shift down by 2
+	private static function typeIdToVariant(int $typeId) : int{
+		return $typeId > ItemStackRequestActionType::CRAFTING_CREATE_SPECIFIC_RESULT ? $typeId - 2 : $typeId;
+	}
+
+	private static function variantToTypeId(int $variant) : int{
+		return $variant > ItemStackRequestActionType::CRAFTING_CREATE_SPECIFIC_RESULT ? $variant + 2 : $variant;
+	}
+
 	/**
 	 * @throws DataDecodeException
 	 * @throws PacketDecodeException
@@ -82,8 +91,9 @@ final class ItemStackRequest{
 		$requestId = CommonTypes::readItemStackRequestId($in);
 		$actions = [];
 		for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
-			$typeId = Byte::readUnsigned($in);
-			$actions[] = self::readAction($in, $typeId);
+			$variant = VarInt::readUnsignedInt($in);
+			Byte::readUnsigned($in); //legacy type ID, redundant with the variant
+			$actions[] = self::readAction($in, self::variantToTypeId($variant));
 		}
 		$filterStrings = [];
 		for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
@@ -97,6 +107,7 @@ final class ItemStackRequest{
 		CommonTypes::writeItemStackRequestId($out, $this->requestId);
 		VarInt::writeUnsignedInt($out, count($this->actions));
 		foreach($this->actions as $action){
+			VarInt::writeUnsignedInt($out, self::typeIdToVariant($action->getTypeId()));
 			Byte::writeUnsigned($out, $action->getTypeId());
 			$action->write($out);
 		}

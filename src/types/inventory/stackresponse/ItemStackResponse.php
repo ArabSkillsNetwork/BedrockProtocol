@@ -52,10 +52,14 @@ final class ItemStackResponse{
 		$result = Byte::readUnsigned($in);
 		$requestId = CommonTypes::readItemStackRequestId($in);
 		$containerInfos = [];
-		if($result === self::RESULT_OK){
-			for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
-				$containerInfos[] = ItemStackResponseContainerInfo::read($in);
-			}
+		if(CommonTypes::getBool($in)){
+			$containerInfos = CommonTypes::readOptional($in, function(ByteBufferReader $in) : array{
+				$infos = [];
+				for($i = 0, $len = VarInt::readUnsignedInt($in); $i < $len; ++$i){
+					$infos[] = ItemStackResponseContainerInfo::read($in);
+				}
+				return $infos;
+			}) ?? [];
 		}
 		return new self($result, $requestId, $containerInfos);
 	}
@@ -63,11 +67,12 @@ final class ItemStackResponse{
 	public function write(ByteBufferWriter $out) : void{
 		Byte::writeUnsigned($out, $this->result);
 		CommonTypes::writeItemStackRequestId($out, $this->requestId);
-		if($this->result === self::RESULT_OK){
-			VarInt::writeUnsignedInt($out, count($this->containerInfos));
-			foreach($this->containerInfos as $containerInfo){
+		CommonTypes::putBool($out, true);
+		CommonTypes::writeOptional($out, count($this->containerInfos) !== 0 ? $this->containerInfos : null, function(ByteBufferWriter $out, array $containerInfos) : void{
+			VarInt::writeUnsignedInt($out, count($containerInfos));
+			foreach($containerInfos as $containerInfo){
 				$containerInfo->write($out);
 			}
-		}
+		});
 	}
 }
