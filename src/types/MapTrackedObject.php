@@ -20,9 +20,7 @@ class MapTrackedObject{
 
 	public int $type;
 
-	/** @var int Only set if is TYPE_ENTITY */
-	public int $actorUniqueId;
+	public ?int $actorUniqueId = null;
 
-	/** Only set if is TYPE_BLOCK */
-	public BlockPosition $blockPosition;
+	public ?BlockPosition $blockPosition = null;
 }

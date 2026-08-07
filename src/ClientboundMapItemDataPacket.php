@@ -26,7 +26,6 @@ use pocketmine\network\mcpe\protocol\types\DimensionIds;
 use pocketmine\network\mcpe\protocol\types\MapDecoration;
 use pocketmine\network\mcpe\protocol\types\MapImage;
 use pocketmine\network\mcpe\protocol\types\MapTrackedObject;
-use pocketmine\utils\Binary;
 use function count;
 
 class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPacket{
@@ -71,11 +70,9 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 			for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; ++$i){
 				$object = new MapTrackedObject();
 				$object->type = LE::readUnsignedInt($in);
-				if($object->type === MapTrackedObject::TYPE_BLOCK){
-					$object->blockPosition = CommonTypes::getBlockPosition($in);
-				}elseif($object->type === MapTrackedObject::TYPE_ENTITY){
-					$object->actorUniqueId = CommonTypes::getActorUniqueId($in);
-				}else{
+				$object->actorUniqueId = CommonTypes::readOptional($in, CommonTypes::getActorUniqueId(...));
+				$object->blockPosition = CommonTypes::readOptional($in, CommonTypes::getBlockPosition(...));
+				if($object->type !== MapTrackedObject::TYPE_ENTITY && $object->type !== MapTrackedObject::TYPE_BLOCK){
 					throw new PacketDecodeException("Unknown map object type $object->type");
 				}
 				$trackedEntities[] = $object;
@@ -91,7 +88,7 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 				$xOffset = Byte::readUnsigned($in);
 				$yOffset = Byte::readUnsigned($in);
 				$label = CommonTypes::getString($in);
-				$color = Color::fromRGBA(Binary::flipIntEndianness(VarInt::readUnsignedInt($in)));
+				$color = Color::fromARGB(LE::readUnsignedInt($in));
 				$decorations[] = new MapDecoration($icon, $rotation, $xOffset, $yOffset, $label, $color);
 			}
 			return $decorations;
@@ -133,14 +130,12 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 		CommonTypes::writeOptional($out, count($this->trackedEntities) !== 0 ? $this->trackedEntities : null, function(ByteBufferWriter $out, array $trackedEntities) : void{
 			VarInt::writeUnsignedInt($out, count($trackedEntities));
 			foreach($trackedEntities as $object){
-				LE::writeUnsignedInt($out, $object->type);
-				if($object->type === MapTrackedObject::TYPE_BLOCK){
-					CommonTypes::putBlockPosition($out, $object->blockPosition);
-				}elseif($object->type === MapTrackedObject::TYPE_ENTITY){
-					CommonTypes::putActorUniqueId($out, $object->actorUniqueId);
-				}else{
+				if($object->type !== MapTrackedObject::TYPE_ENTITY && $object->type !== MapTrackedObject::TYPE_BLOCK){
 					throw new \InvalidArgumentException("Unknown map object type $object->type");
 				}
+				LE::writeUnsignedInt($out, $object->type);
+				CommonTypes::writeOptional($out, $object->actorUniqueId, CommonTypes::putActorUniqueId(...));
+				CommonTypes::writeOptional($out, $object->blockPosition, CommonTypes::putBlockPosition(...));
 			}
 		});
 
@@ -152,7 +147,7 @@ class ClientboundMapItemDataPacket extends DataPacket implements ClientboundPack
 				Byte::writeUnsigned($out, $decoration->getXOffset());
 				Byte::writeUnsigned($out, $decoration->getYOffset());
 				CommonTypes::putString($out, $decoration->getLabel());
-				VarInt::writeUnsignedInt($out, Binary::flipIntEndianness($decoration->getColor()->toRGBA()));
+				LE::writeUnsignedInt($out, $decoration->getColor()->toARGB());
 			}
 		});
 

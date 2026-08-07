@@ -299,7 +299,6 @@ final class CommonTypes{
 	}
 
 	/**
-	 * @throws PacketDecodeException
 	 * @throws DataDecodeException
 	 */
 	public static function getItemStackWithoutStackId(ByteBufferReader $in) : ItemStack{
@@ -699,7 +698,7 @@ final class CommonTypes{
 
 		$result->structureBlockType = VarInt::readSignedInt($in);
 		$result->structureSettings = self::getStructureSettings($in);
-		$result->structureRedstoneSaveMode = VarInt::readSignedInt($in);
+		$result->structureRedstoneSaveMode = Byte::readUnsigned($in);
 
 		return $result;
 	}
@@ -714,7 +713,7 @@ final class CommonTypes{
 
 		VarInt::writeSignedInt($out, $structureEditorData->structureBlockType);
 		self::putStructureSettings($out, $structureEditorData->structureSettings);
-		VarInt::writeSignedInt($out, $structureEditorData->structureRedstoneSaveMode);
+		Byte::writeUnsigned($out, $structureEditorData->structureRedstoneSaveMode);
 	}
 
 	/** @throws PacketDecodeException */
@@ -768,7 +767,7 @@ final class CommonTypes{
 	 * @throws DataDecodeException
 	 */
 	public static function readItemStackNetIdVariant(ByteBufferReader $in) : int{
-		return VarInt::readSignedInt($in);
+		return LE::readSignedInt($in);
 	}
 
 	/**
@@ -777,7 +776,7 @@ final class CommonTypes{
 	 * as-yet unacknowledged request from the client.
 	 */
 	public static function writeItemStackNetIdVariant(ByteBufferWriter $out, int $id) : void{
-		VarInt::writeSignedInt($out, $id);
+		LE::writeSignedInt($out, $id);
 	}
 
 	/** @throws DataDecodeException */

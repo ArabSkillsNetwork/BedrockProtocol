@@ -20,6 +20,8 @@ use pmmp\encoding\VarInt;
 use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use Ramsey\Uuid\UuidInterface;
+use function array_map;
+use function array_values;
 use function count;
 use function intdiv;
 
@@ -112,10 +114,11 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		$recipeId = CommonTypes::getString($in);
 		$width = VarInt::readSignedInt($in);
 		$height = VarInt::readSignedInt($in);
-		$input = [];
+		$rows = [];
 		for($i = 0, $ingredientCount = VarInt::readUnsignedInt($in); $i < $ingredientCount; ++$i){
-			$input[intdiv($i, $width)][$i % $width] = RecipeIngredient::read($in);
+			$rows[intdiv($i, $width)][$i % $width] = RecipeIngredient::read($in);
 		}
+		$input = array_map(array_values(...), array_values($rows));
 
 		$output = [];
 		for($k = 0, $resultCount = VarInt::readUnsignedInt($in); $k < $resultCount; ++$k){

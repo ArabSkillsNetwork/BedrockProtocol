@@ -95,14 +95,14 @@ class SetScorePacket extends DataPacket implements ClientboundPacket{
 					break;
 				case ScorePacketEntry::TYPE_PLAYER:
 				case ScorePacketEntry::TYPE_ENTITY:
-					CommonTypes::putString($out, $entry->objectiveName);
+					CommonTypes::putString($out, $entry->objectiveName ?? "");
 					LE::writeSignedInt($out, $entry->score);
 					CommonTypes::putActorUniqueId($out, $entry->actorUniqueId);
 					break;
 				case ScorePacketEntry::TYPE_FAKE_PLAYER:
-					CommonTypes::putString($out, $entry->objectiveName);
+					CommonTypes::putString($out, $entry->objectiveName ?? "");
 					LE::writeSignedInt($out, $entry->score);
-					CommonTypes::putString($out, $entry->customName);
+					CommonTypes::putString($out, $entry->customName ?? "");
 					break;
 			}
 		}
