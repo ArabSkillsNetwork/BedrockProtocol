@@ -832,4 +832,26 @@ final class CommonTypes{
 			self::putBool($out, false);
 		}
 	}
+
+	/**
+	 * An optional nested inside another optional. Both flags are set together, so this behaves like a plain
+	 * optional with an extra byte.
+	 *
+	 * @phpstan-template T
+	 * @phpstan-param \Closure(ByteBufferReader) : T $reader
+	 * @phpstan-return T|null
+	 * @throws DataDecodeException
+	 */
+	public static function readDoubleOptional(ByteBufferReader $in, \Closure $reader) : mixed{
+		return self::readOptional($in, fn(ByteBufferReader $in) => self::readOptional($in, $reader));
+	}
+
+	/**
+	 * @phpstan-template T
+	 * @phpstan-param T|null $value
+	 * @phpstan-param \Closure(ByteBufferWriter, T) : void $writer
+	 */
+	public static function writeDoubleOptional(ByteBufferWriter $out, mixed $value, \Closure $writer) : void{
+		self::writeOptional($out, $value, fn(ByteBufferWriter $out, mixed $value) => self::writeOptional($out, $value, $writer));
+	}
 }
