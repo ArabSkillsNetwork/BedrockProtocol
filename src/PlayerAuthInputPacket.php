@@ -277,14 +277,12 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 		$this->headYaw = LE::readFloat($in);
 		//input flags are sent as a list of the indexes which are set, not as a bitset
 		$this->inputFlags = new BitSet(PlayerAuthInputFlags::NUMBER_OF_FLAGS);
-		if(CommonTypes::getBool($in)){
-			for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; ++$i){
-				$flag = VarInt::readSignedInt($in);
-				if($flag < 0 || $flag >= PlayerAuthInputFlags::NUMBER_OF_FLAGS){
-					throw new PacketDecodeException("Unknown input flag $flag");
-				}
-				$this->inputFlags->set($flag, true);
+		for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; ++$i){
+			$flag = VarInt::readSignedInt($in);
+			if($flag < 0 || $flag >= PlayerAuthInputFlags::NUMBER_OF_FLAGS){
+				throw new PacketDecodeException("Unknown input flag $flag");
 			}
+			$this->inputFlags->set($flag, true);
 		}
 		$this->inputMode = VarInt::readUnsignedInt($in);
 		$this->playMode = VarInt::readUnsignedInt($in);
@@ -292,28 +290,18 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 		$this->interactRotation = CommonTypes::getVector2($in);
 		$this->tick = VarInt::readUnsignedLong($in);
 		$this->delta = CommonTypes::getVector3($in);
-		if(CommonTypes::getBool($in)){
-			$this->itemInteractionData = CommonTypes::readOptional($in, ItemInteractionData::read(...));
-		}
-		if(CommonTypes::getBool($in)){
-			$this->itemStackRequest = CommonTypes::readOptional($in, ItemStackRequest::read(...));
-		}
-		if(CommonTypes::getBool($in)){
-			$this->blockActions = CommonTypes::readOptional($in, function(ByteBufferReader $in) : array{
+		$this->itemInteractionData = CommonTypes::readOptional($in, ItemInteractionData::read(...));
+		$this->itemStackRequest = CommonTypes::readOptional($in, ItemStackRequest::read(...));
+		$this->blockActions = CommonTypes::readOptional($in, function(ByteBufferReader $in) : array{
 				$blockActions = [];
 				for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; ++$i){
 					$actionType = VarInt::readSignedInt($in);
 					$blockActions[] = PlayerBlockActionWithBlockInfo::read($in, $actionType);
 				}
 				return $blockActions;
-			});
-		}
-		if(CommonTypes::getBool($in)){
-			$this->vehicleRotation = CommonTypes::readOptional($in, CommonTypes::getVector2(...));
-		}
-		if(CommonTypes::getBool($in)){
-			$this->predictedVehicleActorUniqueId = CommonTypes::readOptional($in, CommonTypes::getActorUniqueId(...));
-		}
+		});
+		$this->vehicleRotation = CommonTypes::readOptional($in, CommonTypes::getVector2(...));
+		$this->predictedVehicleActorUniqueId = CommonTypes::readOptional($in, CommonTypes::getActorUniqueId(...));
 		$this->analogMoveVecX = LE::readFloat($in);
 		$this->analogMoveVecZ = LE::readFloat($in);
 		$this->cameraOrientation = CommonTypes::getVector3($in);
@@ -327,7 +315,6 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 		LE::writeFloat($out, $this->moveVecX);
 		LE::writeFloat($out, $this->moveVecZ);
 		LE::writeFloat($out, $this->headYaw);
-		CommonTypes::putBool($out, true);
 		$setFlags = [];
 		for($i = 0; $i < PlayerAuthInputFlags::NUMBER_OF_FLAGS; ++$i){
 			if($this->inputFlags->get($i)){
@@ -344,11 +331,8 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 		CommonTypes::putVector2($out, $this->interactRotation);
 		VarInt::writeUnsignedLong($out, $this->tick);
 		CommonTypes::putVector3($out, $this->delta);
-		CommonTypes::putBool($out, true);
 		CommonTypes::writeOptional($out, $this->itemInteractionData, fn(ByteBufferWriter $out, ItemInteractionData $v) => $v->write($out));
-		CommonTypes::putBool($out, true);
 		CommonTypes::writeOptional($out, $this->itemStackRequest, fn(ByteBufferWriter $out, ItemStackRequest $v) => $v->write($out));
-		CommonTypes::putBool($out, true);
 		CommonTypes::writeOptional($out, $this->blockActions, function(ByteBufferWriter $out, array $blockActions) : void{
 			VarInt::writeUnsignedInt($out, count($blockActions));
 			foreach($blockActions as $blockAction){
@@ -356,9 +340,7 @@ class PlayerAuthInputPacket extends DataPacket implements ServerboundPacket{
 				$blockAction->write($out);
 			}
 		});
-		CommonTypes::putBool($out, true);
 		CommonTypes::writeOptional($out, $this->vehicleRotation, CommonTypes::putVector2(...));
-		CommonTypes::putBool($out, true);
 		CommonTypes::writeOptional($out, $this->predictedVehicleActorUniqueId, CommonTypes::putActorUniqueId(...));
 		LE::writeFloat($out, $this->analogMoveVecX);
 		LE::writeFloat($out, $this->analogMoveVecZ);

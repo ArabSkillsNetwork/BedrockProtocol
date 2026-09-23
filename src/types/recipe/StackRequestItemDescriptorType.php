@@ -14,17 +14,15 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\recipe;
 
-final class RecipeIngredient{
-	public function __construct(
-		private ?ItemDescriptor $descriptor,
-		private int $count
-	){}
+/** Descriptor type IDs used by item stack requests. */
+final class StackRequestItemDescriptorType{
 
-	public function getDescriptor() : ?ItemDescriptor{
-		return $this->descriptor;
+	private function __construct(){
+		//NOOP
 	}
 
-	public function getCount() : int{
-		return $this->count;
-	}
+	public const EMPTY = 0;
+	public const STRING_ID_META = 1;
+	public const MOLANG = 2;
+	public const TAG = 3;
 }

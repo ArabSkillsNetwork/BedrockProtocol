@@ -116,7 +116,7 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		$height = VarInt::readSignedInt($in);
 		$rows = [];
 		for($i = 0, $ingredientCount = VarInt::readUnsignedInt($in); $i < $ingredientCount; ++$i){
-			$rows[intdiv($i, $width)][$i % $width] = RecipeIngredient::read($in);
+			$rows[intdiv($i, $width)][$i % $width] = CommonTypes::getRecipeIngredient($in);
 		}
 		$input = array_map(array_values(...), array_values($rows));
 
@@ -126,6 +126,7 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		}
 		$uuid = CommonTypes::getUUID($in);
 		$block = CommonTypes::getString($in);
+
 		$priority = VarInt::readSignedInt($in);
 		$symmetric = CommonTypes::getBool($in);
 		$unlockingRequirement = CommonTypes::readOptional($in, RecipeUnlockingRequirement::read(...));
@@ -142,7 +143,7 @@ final class ShapedRecipe extends RecipeWithTypeId{
 		VarInt::writeUnsignedInt($out, $this->getWidth() * $this->getHeight());
 		foreach($this->input as $row){
 			foreach($row as $ingredient){
-				$ingredient->write($out);
+				CommonTypes::putRecipeIngredient($out, $ingredient);
 			}
 		}
 

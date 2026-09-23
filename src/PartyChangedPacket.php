@@ -21,8 +21,8 @@ use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 class PartyChangedPacket extends DataPacket implements ServerboundPacket{
 	public const NETWORK_ID = ProtocolInfo::PARTY_CHANGED_PACKET;
 
-	private string $partyId;
-	private bool $partyLeader;
+	private ?string $partyId = null;
+	private ?bool $partyLeader = null;
 
 	/**
 	 * @generate-create-func
@@ -34,18 +34,28 @@ class PartyChangedPacket extends DataPacket implements ServerboundPacket{
 		return $result;
 	}
 
-	public function getPartyId() : string{ return $this->partyId; }
+	public function getPartyId() : ?string{ return $this->partyId; }
 
-	public function isPartyLeader() : bool{ return $this->partyLeader; }
+	public function isPartyLeader() : ?bool{ return $this->partyLeader; }
 
 	protected function decodePayload(ByteBufferReader $in) : void{
-		$this->partyId = CommonTypes::getString($in);
-		$this->partyLeader = CommonTypes::getBool($in);
+		if (CommonTypes::getBool($in)) {
+			$this->partyId = CommonTypes::getString($in);
+			$this->partyLeader = CommonTypes::getBool($in);
+		}
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
-		CommonTypes::putString($out, $this->partyId);
-		CommonTypes::putBool($out, $this->partyLeader);
+		$partyId = $this->partyId;
+		$partyLeader = $this->partyLeader;
+
+		if($partyId !== null && $partyLeader !== null){
+			CommonTypes::putBool($out, true);
+			CommonTypes::putString($out, $partyId);
+			CommonTypes::putBool($out, $partyLeader);
+		}else{
+			CommonTypes::putBool($out, false);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

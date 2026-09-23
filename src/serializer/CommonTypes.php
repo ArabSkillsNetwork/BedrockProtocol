@@ -46,11 +46,11 @@ use pocketmine\network\mcpe\protocol\types\GameRule;
 use pocketmine\network\mcpe\protocol\types\IntGameRule;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStack;
 use pocketmine\network\mcpe\protocol\types\inventory\ItemStackWrapper;
-use pocketmine\network\mcpe\protocol\types\recipe\ComplexAliasItemDescriptor;
-use pocketmine\network\mcpe\protocol\types\recipe\IntIdMetaItemDescriptor;
+use pocketmine\network\mcpe\protocol\types\recipe\ItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\ItemDescriptorType;
 use pocketmine\network\mcpe\protocol\types\recipe\MolangItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\RecipeIngredient;
+use pocketmine\network\mcpe\protocol\types\recipe\StackRequestItemDescriptorType;
 use pocketmine\network\mcpe\protocol\types\recipe\StringIdMetaItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\recipe\TagItemDescriptor;
 use pocketmine\network\mcpe\protocol\types\skin\PersonaPieceTintColor;
@@ -64,6 +64,7 @@ use pocketmine\network\mcpe\protocol\types\UnsetGameRule;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use function count;
+use function get_class;
 use function str_starts_with;
 use function strlen;
 use function strrev;
@@ -367,27 +368,108 @@ final class CommonTypes{
 
 	/** @throws DataDecodeException */
 	public static function getRecipeIngredient(ByteBufferReader $in) : RecipeIngredient{
-		$descriptorType = Byte::readUnsigned($in);
-		$descriptor = match($descriptorType){
-			ItemDescriptorType::INT_ID_META => IntIdMetaItemDescriptor::read($in),
-			ItemDescriptorType::STRING_ID_META => StringIdMetaItemDescriptor::read($in),
-			ItemDescriptorType::TAG => TagItemDescriptor::read($in),
-			ItemDescriptorType::MOLANG => MolangItemDescriptor::read($in),
-			ItemDescriptorType::COMPLEX_ALIAS => ComplexAliasItemDescriptor::read($in),
-			default => null
-		};
+		$hasDescriptor = Byte::readUnsigned($in);
+		if($hasDescriptor === 0){
+			$meta = VarInt::readSignedInt($in);
+			if($meta !== 32767){
+				throw new PacketDecodeException("Expected meta 32767 for empty recipe ingredient, got $meta");
+			}
+			$descriptor = null;
+		}elseif($hasDescriptor === 1){
+			$descriptor = match(self::getString($in)){
+				"name" => StringIdMetaItemDescriptor::read($in),
+				"item_tag" => TagItemDescriptor::read($in),
+				"molang" => MolangItemDescriptor::read($in),
+				default => throw new PacketDecodeException("Unknown recipe ingredient descriptor type")
+			};
+		}else{
+			throw new PacketDecodeException("Expected 0 or 1 for recipe ingredient variant, got $hasDescriptor");
+		}
 		$count = VarInt::readSignedInt($in);
 
 		return new RecipeIngredient($descriptor, $count);
 	}
 
 	public static function putRecipeIngredient(ByteBufferWriter $out, RecipeIngredient $ingredient) : void{
-		$type = $ingredient->getDescriptor();
-
-		Byte::writeUnsigned($out, $type?->getTypeId() ?? 0);
-		$type?->write($out);
+		$descriptor = $ingredient->getDescriptor();
+		if($descriptor === null){
+			Byte::writeUnsigned($out, 0);
+			VarInt::writeSignedInt($out, 32767);
+		}else{
+			Byte::writeUnsigned($out, 1);
+			$name = match($descriptor->getTypeId()){
+				ItemDescriptorType::STRING_ID_META => "name",
+				ItemDescriptorType::TAG => "item_tag",
+				ItemDescriptorType::MOLANG => "molang",
+				default => throw new \InvalidArgumentException("Unsupported recipe ingredient descriptor")
+			};
+			self::putString($out, $name);
+			$descriptor->write($out);
+		}
 
 		VarInt::writeSignedInt($out, $ingredient->getCount());
+	}
+
+	/**
+	 * Reads an item descriptor used by item stack requests.
+	 *
+	 * @throws DataDecodeException
+	 * @throws PacketDecodeException
+	 */
+	public static function readItemDescriptorNormal(ByteBufferReader $in) : ?ItemDescriptor{
+		$descriptorType = VarInt::readUnsignedInt($in);
+		$innerType = Byte::readUnsigned($in);
+		if($descriptorType !== $innerType){
+			throw new PacketDecodeException("Item descriptor type mismatch: outer type $descriptorType, inner type $innerType");
+		}
+
+		return match($descriptorType){
+			StackRequestItemDescriptorType::EMPTY => null,
+			StackRequestItemDescriptorType::STRING_ID_META => new StringIdMetaItemDescriptor(self::getString($in), VarInt::readSignedInt($in)),
+			StackRequestItemDescriptorType::MOLANG => new MolangItemDescriptor(self::getString($in), LE::readUnsignedShort($in)),
+			StackRequestItemDescriptorType::TAG => new TagItemDescriptor(self::getString($in)),
+			default => throw new PacketDecodeException("Unknown item descriptor type $descriptorType")
+		};
+	}
+
+	public static function writeItemDescriptorNormal(ByteBufferWriter $out, ?ItemDescriptor $descriptor) : void{
+		$descriptorType = match(true){
+			$descriptor === null => StackRequestItemDescriptorType::EMPTY,
+			$descriptor instanceof StringIdMetaItemDescriptor => StackRequestItemDescriptorType::STRING_ID_META,
+			$descriptor instanceof MolangItemDescriptor => StackRequestItemDescriptorType::MOLANG,
+			$descriptor instanceof TagItemDescriptor => StackRequestItemDescriptorType::TAG,
+			default => throw new \LogicException("Unsupported item descriptor type " . get_class($descriptor))
+		};
+		VarInt::writeUnsignedInt($out, $descriptorType);
+		Byte::writeUnsigned($out, $descriptorType);
+
+		if($descriptor instanceof StringIdMetaItemDescriptor){
+			self::putString($out, $descriptor->getId());
+			VarInt::writeSignedInt($out, $descriptor->getMeta());
+		}elseif($descriptor instanceof MolangItemDescriptor){
+			self::putString($out, $descriptor->getMolangExpression());
+			LE::writeUnsignedShort($out, $descriptor->getMolangVersion());
+		}elseif($descriptor instanceof TagItemDescriptor){
+			self::putString($out, $descriptor->getTag());
+		}
+	}
+
+	/**
+	 * Reads an ingredient used by item stack requests.
+	 *
+	 * @throws DataDecodeException
+	 * @throws PacketDecodeException
+	 */
+	public static function readStackRequestIngredient(ByteBufferReader $in) : RecipeIngredient{
+		$descriptor = self::readItemDescriptorNormal($in);
+		$count = LE::readUnsignedShort($in);
+
+		return new RecipeIngredient($descriptor, $count);
+	}
+
+	public static function writeStackRequestIngredient(ByteBufferWriter $out, RecipeIngredient $ingredient) : void{
+		self::writeItemDescriptorNormal($out, $ingredient->getDescriptor());
+		LE::writeUnsignedShort($out, $ingredient->getCount());
 	}
 
 	/**

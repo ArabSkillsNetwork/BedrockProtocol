@@ -34,14 +34,14 @@ use function count;
 class CraftingDataPacket extends DataPacket implements ClientboundPacket{
 	public const NETWORK_ID = ProtocolInfo::CRAFTING_DATA_PACKET;
 
-	public const ENTRY_SHAPELESS = 0;
-	public const ENTRY_SHAPED = 1;
-	public const ENTRY_MULTI = 4;
-	public const ENTRY_USER_DATA_SHAPELESS = 5;
-	public const ENTRY_SHAPELESS_CHEMISTRY = 6;
-	public const ENTRY_SHAPED_CHEMISTRY = 7;
-	public const ENTRY_SMITHING_TRANSFORM = 8;
-	public const ENTRY_SMITHING_TRIM = 9;
+	public const ENTRY_SHAPED = 0;
+	public const ENTRY_SHAPELESS = 1;
+	public const ENTRY_MULTI = 2;
+	public const ENTRY_USER_DATA_SHAPELESS = 3;
+	public const ENTRY_SHAPELESS_CHEMISTRY = 4;
+	public const ENTRY_SHAPED_CHEMISTRY = 5;
+	public const ENTRY_SMITHING_TRANSFORM = 6;
+	public const ENTRY_SMITHING_TRIM = 7;
 
 	/** @var RecipeWithTypeId[] */
 	public array $recipesWithTypeIds = [];
@@ -151,6 +151,7 @@ class CraftingDataPacket extends DataPacket implements ClientboundPacket{
 		self::putRecipes($out, $byType[self::ENTRY_SHAPED_CHEMISTRY] ?? []);
 		self::putRecipes($out, $byType[self::ENTRY_SMITHING_TRANSFORM] ?? []);
 		self::putRecipes($out, $byType[self::ENTRY_SMITHING_TRIM] ?? []);
+
 		VarInt::writeUnsignedInt($out, count($this->potionTypeRecipes));
 		foreach($this->potionTypeRecipes as $recipe){
 			VarInt::writeSignedInt($out, $recipe->getInputItemId());

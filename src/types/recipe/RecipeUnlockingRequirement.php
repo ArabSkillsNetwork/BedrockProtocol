@@ -51,7 +51,7 @@ final class RecipeUnlockingRequirement{
 		$unlockingIngredients = [];
 		if(CommonTypes::getBool($in)){
 			for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; $i++){
-				$unlockingIngredients[] = RecipeIngredient::read($in);
+				$unlockingIngredients[] = CommonTypes::getRecipeIngredient($in);
 			}
 		}
 
@@ -65,7 +65,7 @@ final class RecipeUnlockingRequirement{
 		if($hasIngredients){
 			VarInt::writeUnsignedInt($out, count($this->unlockingIngredients));
 			foreach($this->unlockingIngredients as $ingredient){
-				$ingredient->write($out);
+				CommonTypes::putRecipeIngredient($out, $ingredient);
 			}
 		}
 	}

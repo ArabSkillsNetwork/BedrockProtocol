@@ -57,7 +57,7 @@ final class CraftRecipeAutoStackRequestAction extends ItemStackRequestAction{
 		$repetitions = Byte::readUnsigned($in);
 		$ingredients = [];
 		for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; ++$i){
-			$ingredients[] = CommonTypes::getRecipeIngredient($in);
+			$ingredients[] = CommonTypes::readStackRequestIngredient($in);
 		}
 		return new self($recipeId, $repetitions, $ingredients);
 	}
@@ -65,9 +65,10 @@ final class CraftRecipeAutoStackRequestAction extends ItemStackRequestAction{
 	public function write(ByteBufferWriter $out) : void{
 		CommonTypes::writeRecipeNetId($out, $this->recipeId);
 		Byte::writeUnsigned($out, $this->repetitions);
+		// Byte::writeUnsigned($out, $this->repetitions); // lets try this
 		VarInt::writeUnsignedInt($out, count($this->ingredients));
 		foreach($this->ingredients as $ingredient){
-			CommonTypes::putRecipeIngredient($out, $ingredient);
+			CommonTypes::writeStackRequestIngredient($out, $ingredient);
 		}
 	}
 }

@@ -12,19 +12,15 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol\types\recipe;
+namespace pocketmine\network\mcpe\protocol\types\furnace;
 
-final class RecipeIngredient{
-	public function __construct(
-		private ?ItemDescriptor $descriptor,
-		private int $count
-	){}
+use pocketmine\network\mcpe\protocol\types\PacketIntEnumTrait;
 
-	public function getDescriptor() : ?ItemDescriptor{
-		return $this->descriptor;
-	}
+enum FurnaceType : int{
+	use PacketIntEnumTrait;
 
-	public function getCount() : int{
-		return $this->count;
-	}
+	case NONE = 0;
+	case FURNACE = 1;
+	case BLAST_FURNACE = 2;
+	case SMOKER = 3;
 }

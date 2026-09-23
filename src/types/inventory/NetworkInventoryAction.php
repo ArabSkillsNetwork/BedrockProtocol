@@ -76,12 +76,8 @@ class NetworkInventoryAction{
 	public function readAuthInput(ByteBufferReader $in) : NetworkInventoryAction{
 		$this->sourceType = VarInt::readUnsignedInt($in);
 
-		/** @var int|null $windowId */
-		$windowId = CommonTypes::readOptional($in, fn(ByteBufferReader $in) => CommonTypes::readOptional($in, Byte::readSigned(...)));
-		$this->windowId = $windowId;
-		/** @var int|null $sourceFlags */
-		$sourceFlags = CommonTypes::readOptional($in, fn(ByteBufferReader $in) => CommonTypes::readOptional($in, VarInt::readUnsignedInt(...)));
-		$this->sourceFlags = $sourceFlags;
+		$this->windowId = CommonTypes::readOptional($in, Byte::readSigned(...));
+		$this->sourceFlags = CommonTypes::readOptional($in, VarInt::readUnsignedInt(...));
 
 		$this->inventorySlot = VarInt::readUnsignedInt($in);
 		$this->oldItem = CommonTypes::getNetworkItemStackDescriptor($in);
@@ -93,8 +89,8 @@ class NetworkInventoryAction{
 	public function writeAuthInput(ByteBufferWriter $out) : void{
 		VarInt::writeUnsignedInt($out, $this->sourceType);
 
-		CommonTypes::writeOptional($out, $this->windowId, fn(ByteBufferWriter $out, int $windowId) => CommonTypes::writeOptional($out, $windowId, Byte::writeSigned(...)));
-		CommonTypes::writeOptional($out, $this->sourceFlags, fn(ByteBufferWriter $out, int $sourceFlags) => CommonTypes::writeOptional($out, $sourceFlags, VarInt::writeUnsignedInt(...)));
+		CommonTypes::writeOptional($out, $this->windowId, Byte::writeSigned(...));
+		CommonTypes::writeOptional($out, $this->sourceFlags, VarInt::writeUnsignedInt(...));
 
 		VarInt::writeUnsignedInt($out, $this->inventorySlot);
 		CommonTypes::putNetworkItemStackDescriptor($out, $this->oldItem);
@@ -110,12 +106,8 @@ class NetworkInventoryAction{
 	public function readTransaction(ByteBufferReader $in) : NetworkInventoryAction{
 		$this->sourceType = VarInt::readUnsignedInt($in);
 
-		/** @var int|null $windowId */
-		$windowId = CommonTypes::readOptional($in, fn(ByteBufferReader $in) => CommonTypes::readOptional($in, Byte::readSigned(...)));
-		$this->windowId = $windowId;
-		/** @var int|null $sourceFlags */
-		$sourceFlags = CommonTypes::readOptional($in, fn(ByteBufferReader $in) => CommonTypes::readOptional($in, VarInt::readUnsignedInt(...)));
-		$this->sourceFlags = $sourceFlags;
+		$this->windowId = CommonTypes::readOptional($in, Byte::readSigned(...));
+		$this->sourceFlags = CommonTypes::readOptional($in, VarInt::readUnsignedInt(...));
 
 		$this->inventorySlot = VarInt::readUnsignedInt($in);
 		$this->oldItem = CommonTypes::getNetworkItemStackDescriptor($in);
@@ -130,8 +122,8 @@ class NetworkInventoryAction{
 	public function writeTransaction(ByteBufferWriter $out) : void{
 		VarInt::writeUnsignedInt($out, $this->sourceType);
 
-		CommonTypes::writeOptional($out, $this->windowId, fn(ByteBufferWriter $out, int $windowId) => CommonTypes::writeOptional($out, $windowId, Byte::writeSigned(...)));
-		CommonTypes::writeOptional($out, $this->sourceFlags, fn(ByteBufferWriter $out, int $sourceFlags) => CommonTypes::writeOptional($out, $sourceFlags, VarInt::writeUnsignedInt(...)));
+		CommonTypes::writeOptional($out, $this->windowId, Byte::writeSigned(...));
+		CommonTypes::writeOptional($out, $this->sourceFlags, VarInt::writeUnsignedInt(...));
 
 		VarInt::writeUnsignedInt($out, $this->inventorySlot);
 		CommonTypes::putNetworkItemStackDescriptor($out, $this->oldItem);
