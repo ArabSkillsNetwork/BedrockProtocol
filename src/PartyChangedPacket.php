@@ -27,7 +27,7 @@ class PartyChangedPacket extends DataPacket implements ServerboundPacket{
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(string $partyId, bool $partyLeader) : self{
+	public static function create(?string $partyId, ?bool $partyLeader) : self{
 		$result = new self;
 		$result->partyId = $partyId;
 		$result->partyLeader = $partyLeader;

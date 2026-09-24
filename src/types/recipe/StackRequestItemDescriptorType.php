@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\recipe;
 
-/** Descriptor type IDs used by item stack requests. */
+/**
+ * Descriptor type IDs used by item stack requests.
+ */
 final class StackRequestItemDescriptorType{
 
 	private function __construct(){
