@@ -17,6 +17,8 @@ namespace pocketmine\network\mcpe\protocol\types;
 use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
+use pmmp\encoding\VarInt;
+use pocketmine\network\mcpe\protocol\PacketDecodeException;
 use function array_fill;
 use function count;
 
@@ -27,8 +29,8 @@ class SubChunkPacketHeightMapInfo{
 	 * @phpstan-param list<int> $heights
 	 */
 	public function __construct(private array $heights){
-		if(count($heights) !== 272){
-			throw new \InvalidArgumentException("Expected exactly 272 heightmap values");
+		if(count($heights) !== 256){
+			throw new \InvalidArgumentException("Expected exactly 256 heightmap values");
 		}
 	}
 
@@ -36,29 +38,38 @@ class SubChunkPacketHeightMapInfo{
 	public function getHeights() : array{ return $this->heights; }
 
 	public function getHeight(int $x, int $z) : int{
-		return $this->heights[($z << 4) + $z + $x];
+		return $this->heights[(($z & 0xf) << 4) | ($x & 0xf)];
 	}
 
 	public static function read(ByteBufferReader $in) : self{
 		$heights = [];
-		for($i = 0; $i < 272; ++$i){
-			$heights[] = Byte::readSigned($in);
+		for($z = 0; $z < 16; ++$z){
+			$rowLength = VarInt::readUnsignedInt($in);
+			if($rowLength !== 16){
+				throw new PacketDecodeException("Expected heightmap row of 16 values, got $rowLength");
+			}
+			for($x = 0; $x < 16; ++$x){
+				$heights[] = Byte::readSigned($in);
+			}
 		}
 		return new self($heights);
 	}
 
 	public function write(ByteBufferWriter $out) : void{
-		for($i = 0; $i < 272; ++$i){
-			Byte::writeSigned($out, $this->heights[$i]);
+		for($z = 0; $z < 16; ++$z){
+			VarInt::writeUnsignedInt($out, 16);
+			for($x = 0; $x < 16; ++$x){
+				Byte::writeSigned($out, $this->heights[($z << 4) | $x]);
+			}
 		}
 	}
 
 	public static function allTooLow() : self{
-		return new self(array_fill(0, 272, -1));
+		return new self(array_fill(0, 256, -1));
 	}
 
 	public static function allTooHigh() : self{
-		return new self(array_fill(0, 272, 16));
+		return new self(array_fill(0, 256, 16));
 	}
 
 	public function isAllTooLow() : bool{
