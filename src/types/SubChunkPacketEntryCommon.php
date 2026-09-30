@@ -85,7 +85,12 @@ final class SubChunkPacketEntryCommon{
 		CommonTypes::writeOptional($out, $this->terrainData !== "" ? $this->terrainData : null, CommonTypes::putString(...));
 
 		self::writeHeightMap($out, $this->heightMap, SubChunkPacketHeightMapType::NO_DATA);
-		self::writeHeightMap($out, $this->renderHeightMap, SubChunkPacketHeightMapType::ALL_COPIED);
+		if($this->renderHeightMap !== null && $this->renderHeightMap === $this->heightMap){
+			Byte::writeUnsigned($out, SubChunkPacketHeightMapType::ALL_COPIED);
+			CommonTypes::putBool($out, false);
+		}else{
+			self::writeHeightMap($out, $this->renderHeightMap, SubChunkPacketHeightMapType::ALL_COPIED);
+		}
 	}
 
 	private static function writeHeightMap(ByteBufferWriter $out, ?SubChunkPacketHeightMapInfo $heightMap, int $absentType) : void{
