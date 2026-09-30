@@ -322,14 +322,14 @@ final class CommonTypes{
 
 		$itemStack = self::getItemStackFooter($in, $id, $meta, $count);
 
-		return new ItemStackWrapper($stackId, $itemStack);
+		return new ItemStackWrapper($stackId, $itemStack, $hasNetId);
 	}
 
 	public static function putItemStackWrapper(ByteBufferWriter $out, ItemStackWrapper $itemStackWrapper) : void{
 		$itemStack = $itemStackWrapper->getItemStack();
 		self::putItemStackHeader($out, $itemStack);
 
-		$hasNetId = $itemStackWrapper->getStackId() !== 0;
+		$hasNetId = $itemStackWrapper->hasNetId();
 		self::putBool($out, $hasNetId);
 		if($hasNetId){
 			self::writeServerItemStackId($out, $itemStackWrapper->getStackId());
@@ -349,7 +349,7 @@ final class CommonTypes{
 		$blockRuntimeId = VarInt::readUnsignedInt($in);
 		$rawExtraData = self::getString($in);
 
-		return new ItemStackWrapper($stackId, new ItemStack($id, $meta, $count, $blockRuntimeId, $rawExtraData));
+		return new ItemStackWrapper($stackId, new ItemStack($id, $meta, $count, $blockRuntimeId, $rawExtraData), $hasNetId);
 	}
 
 	public static function putNetworkItemStackDescriptor(ByteBufferWriter $out, ItemStackWrapper $itemStackWrapper) : void{
@@ -357,7 +357,7 @@ final class CommonTypes{
 		LE::writeUnsignedShort($out, $itemStackWrapper->getItemStack()->getCount());
 		VarInt::writeUnsignedInt($out, $itemStackWrapper->getItemStack()->getMeta());
 
-		self::putBool($out, $hasNetId = $itemStackWrapper->getStackId() !== 0);
+		self::putBool($out, $hasNetId = $itemStackWrapper->hasNetId());
 		if($hasNetId){
 			self::writeServerItemStackId($out, $itemStackWrapper->getStackId());
 		}

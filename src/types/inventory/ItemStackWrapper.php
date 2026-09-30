@@ -15,10 +15,15 @@ declare(strict_types=1);
 namespace pocketmine\network\mcpe\protocol\types\inventory;
 
 final class ItemStackWrapper{
+	private bool $hasNetId;
+
 	public function __construct(
 		private int $stackId,
-		private ItemStack $itemStack
-	){}
+		private ItemStack $itemStack,
+		?bool $hasNetId = null
+	){
+		$this->hasNetId = $hasNetId ?? $stackId !== 0;
+	}
 
 	public static function legacy(ItemStack $itemStack) : self{
 		return new self($itemStack->getId() === 0 ? 0 : 1, $itemStack);
@@ -27,4 +32,6 @@ final class ItemStackWrapper{
 	public function getStackId() : int{ return $this->stackId; }
 
 	public function getItemStack() : ItemStack{ return $this->itemStack; }
+
+	public function hasNetId() : bool{ return $this->hasNetId; }
 }
