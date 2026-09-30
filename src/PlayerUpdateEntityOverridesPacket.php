@@ -24,13 +24,6 @@ use pocketmine\network\mcpe\protocol\types\OverrideUpdateType;
 class PlayerUpdateEntityOverridesPacket extends DataPacket implements ClientboundPacket{
 	public const NETWORK_ID = ProtocolInfo::PLAYER_UPDATE_ENTITY_OVERRIDES_PACKET;
 
-	private const TYPE_NAMES = [
-		OverrideUpdateType::CLEAR_OVERRIDES->value => "clearoverrides",
-		OverrideUpdateType::REMOVE_OVERRIDE->value => "removeoverride",
-		OverrideUpdateType::SET_INT_OVERRIDE->value => "setintoverride",
-		OverrideUpdateType::SET_FLOAT_OVERRIDE->value => "setfloatoverride",
-	];
-
 	private int $actorUniqueId;
 	private int $propertyIndex;
 	private OverrideUpdateType $updateType;
@@ -81,7 +74,7 @@ class PlayerUpdateEntityOverridesPacket extends DataPacket implements Clientboun
 		$this->propertyIndex = VarInt::readUnsignedInt($in);
 		$this->updateType = OverrideUpdateType::fromPacket(VarInt::readUnsignedInt($in));
 		$typeName = CommonTypes::getString($in);
-		if($typeName !== self::TYPE_NAMES[$this->updateType->value]){
+		if($typeName !== self::typeName($this->updateType)){
 			throw new PacketDecodeException("Entity override type name \"$typeName\" does not match type {$this->updateType->value}");
 		}
 		if($this->updateType === OverrideUpdateType::SET_INT_OVERRIDE){
@@ -95,7 +88,7 @@ class PlayerUpdateEntityOverridesPacket extends DataPacket implements Clientboun
 		CommonTypes::putActorUniqueId($out, $this->actorUniqueId);
 		VarInt::writeUnsignedInt($out, $this->propertyIndex);
 		VarInt::writeUnsignedInt($out, $this->updateType->value);
-		CommonTypes::putString($out, self::TYPE_NAMES[$this->updateType->value]);
+		CommonTypes::putString($out, self::typeName($this->updateType));
 		if($this->updateType === OverrideUpdateType::SET_INT_OVERRIDE){
 			if($this->intOverrideValue === null){ // this should never be the case
 				throw new \LogicException("PlayerUpdateEntityOverridesPacket with type SET_INT_OVERRIDE requires intOverrideValue to be provided");
@@ -107,6 +100,15 @@ class PlayerUpdateEntityOverridesPacket extends DataPacket implements Clientboun
 			}
 			LE::writeFloat($out, $this->floatOverrideValue);
 		}
+	}
+
+	private static function typeName(OverrideUpdateType $type) : string{
+		return match($type){
+			OverrideUpdateType::CLEAR_OVERRIDES => "clearoverrides",
+			OverrideUpdateType::REMOVE_OVERRIDE => "removeoverride",
+			OverrideUpdateType::SET_INT_OVERRIDE => "setintoverride",
+			OverrideUpdateType::SET_FLOAT_OVERRIDE => "setfloatoverride",
+		};
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
