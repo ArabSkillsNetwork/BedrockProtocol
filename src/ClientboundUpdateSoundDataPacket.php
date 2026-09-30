@@ -17,7 +17,6 @@ namespace pocketmine\network\mcpe\protocol;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\LE;
-use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 use pocketmine\network\mcpe\protocol\types\SoundDataUpdate;
 
 class ClientboundUpdateSoundDataPacket extends DataPacket implements ClientboundPacket{
@@ -75,25 +74,20 @@ class ClientboundUpdateSoundDataPacket extends DataPacket implements Clientbound
 
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->serverSoundHandle = LE::readUnsignedLong($in);
-		$this->stop = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
-		$this->setVolume = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
-		$this->setPitch = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
-		$this->fade = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
-		$this->seekTo = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
-		$this->pause = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
-		$this->resume = CommonTypes::readOptional($in, SoundDataUpdate::read(...));
+		$this->stop = SoundDataUpdate::read($in);
+		$this->setVolume = SoundDataUpdate::read($in);
+		$this->setPitch = SoundDataUpdate::read($in);
+		$this->fade = SoundDataUpdate::read($in);
+		$this->seekTo = SoundDataUpdate::read($in);
+		$this->pause = SoundDataUpdate::read($in);
+		$this->resume = SoundDataUpdate::read($in);
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		LE::writeUnsignedLong($out, $this->serverSoundHandle);
-		$writer = fn(ByteBufferWriter $out, SoundDataUpdate $v) => $v->write($out);
-		CommonTypes::writeOptional($out, $this->stop, $writer);
-		CommonTypes::writeOptional($out, $this->setVolume, $writer);
-		CommonTypes::writeOptional($out, $this->setPitch, $writer);
-		CommonTypes::writeOptional($out, $this->fade, $writer);
-		CommonTypes::writeOptional($out, $this->seekTo, $writer);
-		CommonTypes::writeOptional($out, $this->pause, $writer);
-		CommonTypes::writeOptional($out, $this->resume, $writer);
+		foreach([$this->stop, $this->setVolume, $this->setPitch, $this->fade, $this->seekTo, $this->pause, $this->resume] as $update){
+			($update ?? new SoundDataUpdate(SoundDataUpdate::STOP))->write($out);
+		}
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{
