@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types\inventory;
 
+use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\VarInt;
@@ -34,6 +35,7 @@ class ReleaseItemTransactionData extends TransactionData{
 	private int $hotbarSlot;
 	private ItemStackWrapper $itemInHand;
 	private Vector3 $headPosition;
+	private int $hand;
 
 	public function getActionType() : int{
 		return $this->actionType;
@@ -51,11 +53,19 @@ class ReleaseItemTransactionData extends TransactionData{
 		return $this->headPosition;
 	}
 
+	/**
+	 * @see HandSlot
+	 */
+	public function getHand() : int{
+		return $this->hand;
+	}
+
 	protected function decodeData(ByteBufferReader $in) : void{
 		$this->actionType = VarInt::readSignedInt($in);
 		$this->hotbarSlot = VarInt::readSignedInt($in);
 		$this->itemInHand = CommonTypes::getNetworkItemStackDescriptor($in);
 		$this->headPosition = CommonTypes::getVector3($in);
+		$this->hand = Byte::readUnsigned($in);
 	}
 
 	protected function encodeData(ByteBufferWriter $out) : void{
@@ -63,25 +73,27 @@ class ReleaseItemTransactionData extends TransactionData{
 		VarInt::writeSignedInt($out, $this->hotbarSlot);
 		CommonTypes::putNetworkItemStackDescriptor($out, $this->itemInHand);
 		CommonTypes::putVector3($out, $this->headPosition);
+		Byte::writeUnsigned($out, $this->hand);
 	}
 
 	/**
 	 * @generate-create-func
 	 */
-	private static function initSelf(int $actionType, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $headPosition) : self{
+	private static function initSelf(int $actionType, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $headPosition, int $hand) : self{
 		$result = new self;
 		$result->actionType = $actionType;
 		$result->hotbarSlot = $hotbarSlot;
 		$result->itemInHand = $itemInHand;
 		$result->headPosition = $headPosition;
+		$result->hand = $hand;
 		return $result;
 	}
 
 	/**
 	 * @param NetworkInventoryAction[] $actions
 	 */
-	public static function new(array $actions, int $actionType, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $headPosition) : self{
-		$result = self::initSelf($actionType, $hotbarSlot, $itemInHand, $headPosition);
+	public static function new(array $actions, int $actionType, int $hotbarSlot, ItemStackWrapper $itemInHand, Vector3 $headPosition, int $hand) : self{
+		$result = self::initSelf($actionType, $hotbarSlot, $itemInHand, $headPosition, $hand);
 		$result->actions = $actions;
 		return $result;
 	}

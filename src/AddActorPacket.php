@@ -23,6 +23,7 @@ use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 use pocketmine\network\mcpe\protocol\types\entity\Attribute;
 use pocketmine\network\mcpe\protocol\types\entity\EntityLink;
 use pocketmine\network\mcpe\protocol\types\entity\MetadataProperty;
+use pocketmine\network\mcpe\protocol\types\entity\PassengerOfBlockData;
 use pocketmine\network\mcpe\protocol\types\entity\PropertySyncData;
 use function count;
 
@@ -49,6 +50,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 	public PropertySyncData $syncedProperties;
 	/** @var EntityLink[] */
 	public array $links = [];
+	public ?PassengerOfBlockData $passengerOfBlock = null;
 
 	/**
 	 * @generate-create-func
@@ -71,6 +73,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		array $metadata,
 		PropertySyncData $syncedProperties,
 		array $links,
+		?PassengerOfBlockData $passengerOfBlock,
 	) : self{
 		$result = new self;
 		$result->actorUniqueId = $actorUniqueId;
@@ -86,6 +89,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		$result->metadata = $metadata;
 		$result->syncedProperties = $syncedProperties;
 		$result->links = $links;
+		$result->passengerOfBlock = $passengerOfBlock;
 		return $result;
 	}
 
@@ -116,6 +120,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		for($i = 0; $i < $linkCount; ++$i){
 			$this->links[] = CommonTypes::getEntityLink($in);
 		}
+		$this->passengerOfBlock = CommonTypes::readOptional($in, PassengerOfBlockData::read(...));
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -144,6 +149,7 @@ class AddActorPacket extends DataPacket implements ClientboundPacket{
 		foreach($this->links as $link){
 			CommonTypes::putEntityLink($out, $link);
 		}
+		CommonTypes::writeOptional($out, $this->passengerOfBlock, fn(ByteBufferWriter $out, PassengerOfBlockData $v) => $v->write($out));
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

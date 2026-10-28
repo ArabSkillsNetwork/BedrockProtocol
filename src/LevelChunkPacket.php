@@ -38,6 +38,7 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 	/** @var int[] */
 	private array $usedBlobHashes = [];
 	private string $extraPayload;
+	private bool $clientBiomeUpdate;
 
 	/**
 	 * @generate-create-func
@@ -52,6 +53,7 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 		bool $cacheEnabled,
 		array $usedBlobHashes,
 		string $extraPayload,
+		bool $clientBiomeUpdate,
 	) : self{
 		$result = new self;
 		$result->chunkPosition = $chunkPosition;
@@ -61,6 +63,7 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 		$result->cacheEnabled = $cacheEnabled;
 		$result->usedBlobHashes = $usedBlobHashes;
 		$result->extraPayload = $extraPayload;
+		$result->clientBiomeUpdate = $clientBiomeUpdate;
 		return $result;
 	}
 
@@ -91,6 +94,11 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 		return $this->extraPayload;
 	}
 
+	/**
+	 * Whether the biomes in this chunk should override the biome data the client already has for it.
+	 */
+	public function isClientBiomeUpdate() : bool{ return $this->clientBiomeUpdate; }
+
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->chunkPosition = ChunkPosition::read($in);
 		$this->dimensionId = VarInt::readSignedInt($in);
@@ -108,6 +116,7 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 			$this->usedBlobHashes[] = LE::readUnsignedLong($in);
 		}
 		$this->extraPayload = CommonTypes::getString($in);
+		$this->clientBiomeUpdate = CommonTypes::getBool($in);
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
@@ -126,6 +135,7 @@ class LevelChunkPacket extends DataPacket implements ClientboundPacket{
 			LE::writeUnsignedLong($out, $hash);
 		}
 		CommonTypes::putString($out, $this->extraPayload);
+		CommonTypes::putBool($out, $this->clientBiomeUpdate);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

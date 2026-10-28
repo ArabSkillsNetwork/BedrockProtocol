@@ -52,6 +52,7 @@ final class EntityIds{
 	public const COW = "minecraft:cow";
 	public const CREAKING = "minecraft:creaking";
 	public const CREEPER = "minecraft:creeper";
+	public const CUSHION = "minecraft:cushion";
 	public const DOLPHIN = "minecraft:dolphin";
 	public const DONKEY = "minecraft:donkey";
 	public const DRAGON_FIREBALL = "minecraft:dragon_fireball";
@@ -82,6 +83,7 @@ final class EntityIds{
 	public const HOPPER_MINECART = "minecraft:hopper_minecart";
 	public const HORSE = "minecraft:horse";
 	public const HUSK = "minecraft:husk";
+	public const ICE_BALL = "minecraft:ice_ball";
 	public const ICE_BOMB = "minecraft:ice_bomb";
 	public const IRON_GOLEM = "minecraft:iron_golem";
 	public const ITEM = "minecraft:item";

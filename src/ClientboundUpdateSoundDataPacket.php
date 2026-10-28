@@ -23,71 +23,30 @@ class ClientboundUpdateSoundDataPacket extends DataPacket implements Clientbound
 	public const NETWORK_ID = ProtocolInfo::CLIENTBOUND_UPDATE_SOUND_DATA_PACKET;
 
 	private int $serverSoundHandle;
-	private ?SoundDataUpdate $stop;
-	private ?SoundDataUpdate $setVolume;
-	private ?SoundDataUpdate $setPitch;
-	private ?SoundDataUpdate $fade;
-	private ?SoundDataUpdate $seekTo;
-	private ?SoundDataUpdate $pause;
-	private ?SoundDataUpdate $resume;
+	private SoundDataUpdate $update;
 
 	/**
 	 * @generate-create-func
 	 */
-	public static function create(
-		int $serverSoundHandle,
-		?SoundDataUpdate $stop,
-		?SoundDataUpdate $setVolume,
-		?SoundDataUpdate $setPitch,
-		?SoundDataUpdate $fade,
-		?SoundDataUpdate $seekTo,
-		?SoundDataUpdate $pause,
-		?SoundDataUpdate $resume,
-	) : self{
+	public static function create(int $serverSoundHandle, SoundDataUpdate $update) : self{
 		$result = new self;
 		$result->serverSoundHandle = $serverSoundHandle;
-		$result->stop = $stop;
-		$result->setVolume = $setVolume;
-		$result->setPitch = $setPitch;
-		$result->fade = $fade;
-		$result->seekTo = $seekTo;
-		$result->pause = $pause;
-		$result->resume = $resume;
+		$result->update = $update;
 		return $result;
 	}
 
 	public function getServerSoundHandle() : int{ return $this->serverSoundHandle; }
 
-	public function getStop() : ?SoundDataUpdate{ return $this->stop; }
-
-	public function getSetVolume() : ?SoundDataUpdate{ return $this->setVolume; }
-
-	public function getSetPitch() : ?SoundDataUpdate{ return $this->setPitch; }
-
-	public function getFade() : ?SoundDataUpdate{ return $this->fade; }
-
-	public function getSeekTo() : ?SoundDataUpdate{ return $this->seekTo; }
-
-	public function getPause() : ?SoundDataUpdate{ return $this->pause; }
-
-	public function getResume() : ?SoundDataUpdate{ return $this->resume; }
+	public function getUpdate() : SoundDataUpdate{ return $this->update; }
 
 	protected function decodePayload(ByteBufferReader $in) : void{
 		$this->serverSoundHandle = LE::readUnsignedLong($in);
-		$this->stop = SoundDataUpdate::read($in);
-		$this->setVolume = SoundDataUpdate::read($in);
-		$this->setPitch = SoundDataUpdate::read($in);
-		$this->fade = SoundDataUpdate::read($in);
-		$this->seekTo = SoundDataUpdate::read($in);
-		$this->pause = SoundDataUpdate::read($in);
-		$this->resume = SoundDataUpdate::read($in);
+		$this->update = SoundDataUpdate::read($in);
 	}
 
 	protected function encodePayload(ByteBufferWriter $out) : void{
 		LE::writeUnsignedLong($out, $this->serverSoundHandle);
-		foreach([$this->stop, $this->setVolume, $this->setPitch, $this->fade, $this->seekTo, $this->pause, $this->resume] as $update){
-			($update ?? new SoundDataUpdate(SoundDataUpdate::STOP))->write($out);
-		}
+		$this->update->write($out);
 	}
 
 	public function handle(PacketHandlerInterface $handler) : bool{

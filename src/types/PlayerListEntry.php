@@ -25,6 +25,8 @@ class PlayerListEntry{
 	public string $username;
 	public SkinData $skinData;
 	public string $xboxUserId;
+	/** Server-verified PlayFab ID of the player, if available. */
+	public string $playFabId = "";
 	public string $platformChatId = "";
 	public int $buildPlatform = DeviceOS::UNKNOWN;
 	public bool $isTeacher = false;
@@ -50,7 +52,8 @@ class PlayerListEntry{
 		bool $isTeacher = false,
 		bool $isHost = false,
 		bool $isSubClient = false,
-		?Color $color = null
+		?Color $color = null,
+		string $playFabId = ""
 	) : PlayerListEntry{
 		$entry = new PlayerListEntry();
 		$entry->uuid = $uuid;
@@ -58,6 +61,7 @@ class PlayerListEntry{
 		$entry->username = $username;
 		$entry->skinData = $skinData;
 		$entry->xboxUserId = $xboxUserId;
+		$entry->playFabId = $playFabId;
 		$entry->platformChatId = $platformChatId;
 		$entry->buildPlatform = $buildPlatform;
 		$entry->isTeacher = $isTeacher;

@@ -18,6 +18,7 @@ use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\LE;
 use pmmp\encoding\VarInt;
+use pocketmine\network\mcpe\protocol\serializer\CommonTypes;
 use pocketmine\network\mcpe\protocol\types\EntityDiagnosticTimingInfo;
 use pocketmine\network\mcpe\protocol\types\MemoryCategoryCounter;
 use pocketmine\network\mcpe\protocol\types\SystemCategory;
@@ -53,10 +54,10 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 	 */
 	private array $systemDiagnostics = [];
 	/**
-	 * @var SystemCategory[]
-	 * @phpstan-var list<SystemCategory>
+	 * @var SystemCategory[]|null
+	 * @phpstan-var list<SystemCategory>|null
 	 */
-	private array $systemCategories = [];
+	private ?array $systemCategories = null;
 	/**
 	 * @var WhiskerScopeDataSummary[]
 	 * @phpstan-var list<WhiskerScopeDataSummary>
@@ -89,7 +90,7 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 		array $memoryCategoryValues,
 		array $entityDiagnostics,
 		array $systemDiagnostics,
-		array $systemCategories,
+		?array $systemCategories,
 		array $whiskerScopes,
 	) : self{
 		$result = new self;
@@ -147,10 +148,10 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 	public function getSystemDiagnostics() : array{ return $this->systemDiagnostics; }
 
 	/**
-	 * @return SystemCategory[]
-	 * @phpstan-return list<SystemCategory>
+	 * @return SystemCategory[]|null
+	 * @phpstan-return list<SystemCategory>|null
 	 */
-	public function getSystemCategories() : array{ return $this->systemCategories; }
+	public function getSystemCategories() : ?array{ return $this->systemCategories; }
 
 	/**
 	 * @return WhiskerScopeDataSummary[]
@@ -184,10 +185,13 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 			$this->systemDiagnostics[] = SystemDiagnosticTimingInfo::read($in);
 		}
 
-		$this->systemCategories = [];
-		for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; $i++){
-			$this->systemCategories[] = SystemCategory::read($in);
-		}
+		$this->systemCategories = CommonTypes::readOptional($in, function(ByteBufferReader $in) : array{
+			$systemCategories = [];
+			for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; $i++){
+				$systemCategories[] = SystemCategory::read($in);
+			}
+			return $systemCategories;
+		});
 
 		$this->whiskerScopes = [];
 		for($i = 0, $count = VarInt::readUnsignedInt($in); $i < $count; $i++){
@@ -221,10 +225,12 @@ class ServerboundDiagnosticsPacket extends DataPacket implements ServerboundPack
 			$value->write($out);
 		}
 
-		VarInt::writeUnsignedInt($out, count($this->systemCategories));
-		foreach($this->systemCategories as $value){
-			$value->write($out);
-		}
+		CommonTypes::writeOptional($out, $this->systemCategories, function(ByteBufferWriter $out, array $systemCategories) : void{
+			VarInt::writeUnsignedInt($out, count($systemCategories));
+			foreach($systemCategories as $value){
+				$value->write($out);
+			}
+		});
 
 		VarInt::writeUnsignedInt($out, count($this->whiskerScopes));
 		foreach($this->whiskerScopes as $value){

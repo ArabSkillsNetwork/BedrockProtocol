@@ -14,10 +14,10 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types;
 
+use pmmp\encoding\Byte;
 use pmmp\encoding\ByteBufferReader;
 use pmmp\encoding\ByteBufferWriter;
 use pmmp\encoding\LE;
-use pmmp\encoding\VarInt;
 use pocketmine\network\mcpe\protocol\PacketDecodeException;
 
 /**
@@ -60,7 +60,7 @@ final class SoundDataUpdate{
 	 * @throws \pmmp\encoding\DataDecodeException
 	 */
 	public static function read(ByteBufferReader $in) : self{
-		$type = VarInt::readUnsignedInt($in);
+		$type = Byte::readUnsigned($in);
 
 		$volume = 0.0;
 		$pitch = 0.0;
@@ -93,7 +93,7 @@ final class SoundDataUpdate{
 	}
 
 	public function write(ByteBufferWriter $out) : void{
-		VarInt::writeUnsignedInt($out, $this->type);
+		Byte::writeUnsigned($out, $this->type);
 
 		switch($this->type){
 			case self::SET_VOLUME:
